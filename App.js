@@ -1,27 +1,8 @@
 import React, { Component } from 'react';
 import { StyleSheet, View, Text, Image, Platform, TouchableOpacity, Linking, PermissionsAndroid } from 'react-native';
 import { CameraKitCameraScreen, } from 'react-native-camera-kit';
-//import RNFetchBlob from 'react-native-fetch-blob';
-// const values = [
-//   ['build', '2017-11-05T05:40:35.515Z'],
-//   ['deploy', '2017-11-05T05:42:04.810Z']
-// ];
-// // construct csvString
-// const headerString = 'event,timestamp\n';
-// const rowString = values.map(d => `${d[0]},${d[1]}\n`).join('');
-// const csvString = `${headerString}${rowString}`;
+import RNFetchBlob from 'rn-fetch-blob';
 
-// // write the current list of answers to a local csv file
-// const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data111.csv`;
-// console.log('pathToWrite', pathToWrite);
-// // pathToWrite /storage/emulated/0/Download/data.csv
-// RNFetchBlob.fs
-//   .writeFile(pathToWrite, csvString, 'utf8')
-//   .then(() => {
-//     console.log(`wrote file ${pathToWrite}`);
-//     // wrote file /storage/emulated/0/Download/data.csv
-//   })
-//   .catch(error => console.error(error));
 export default class App extends Component {
   constructor() {
 
@@ -80,6 +61,35 @@ export default class App extends Component {
       that.setState({ Start_Scanner: true });
     }
   }
+
+  save = () => {
+    
+    
+    // const values = [
+    //   ['build', '2017-11-05T05:40:35.515Z']
+    //       ];
+    const values = [];
+    values.push([this.state.QR_Code_Value, (new Date()).toISOString()]);
+    values.push([this.state.QR_Code_Value, (new Date()).toISOString()]);
+    console.log(values);
+    // construct csvString
+    const headerString = 'qrcode,timestamp\n';
+    const rowString = values.map(d => `${d[0]},${d[1]}\n`).join('');
+    const csvString = `${headerString}${rowString}`;
+    
+    // write the current list of answers to a local csv file
+    const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
+    console.log('pathToWrite', pathToWrite);
+    // pathToWrite /storage/emulated/0/Download/data.csv
+    RNFetchBlob.fs
+      .writeFile(pathToWrite, csvString, 'utf8')
+      .then(() => {
+        console.log(`wrote file ${pathToWrite}`);
+        // wrote file /storage/emulated/0/Download/data.csv
+      })
+      .catch(error => console.error(error));
+  }
+
   render() {
     if (!this.state.Start_Scanner) {
 
@@ -107,15 +117,15 @@ export default class App extends Component {
               Open QR Scanner
             </Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity
-            onPress={this.open_QR_Code_Scanner}
+          <TouchableOpacity
+            onPress={this.save}
             style={styles.button}>
             <Image
               source={require('./Images/ui-02.png')}
               style={styles.ImageIconStyle}
             />
           </TouchableOpacity>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={this.open_QR_Code_Scanner}
             style={styles.button}>
             <Image
