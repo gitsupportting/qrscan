@@ -4,6 +4,9 @@ import { CameraKitCameraScreen, } from 'react-native-camera-kit';
 import RNFetchBlob from 'rn-fetch-blob';
 import email from 'react-native-email';
 
+var num = 0;
+var values_temp = [];
+// var is_exist;
 export default class App extends Component {
   constructor() {
 
@@ -15,8 +18,7 @@ export default class App extends Component {
 
       Start_Scanner: false,
       values: [],
-      num: 0,
-      // csvString: '',
+      is_exist: false,
     };
   }
 
@@ -27,12 +29,27 @@ export default class App extends Component {
   }
 
   onQR_Code_Scan_Done = (QR_Code) => {
+    let index = values_temp.findIndex(x => x[0] === QR_Code);
+    if (index === -1) {
+      values_temp.push([QR_Code, (new Date()).toISOString()]);
+    } else {
+      this.setState({
+        is_exist: true
+      })
+    }
+    this.setState({
+      Start_Scanner: false
+    })
+    console.warn('values_temp: ', values_temp)
 
     this.setState({ QR_Code_Value: QR_Code });
-    this.setState({ Start_Scanner: false });
+    // this.setState({ Start_Scanner: false });
   }
 
   open_QR_Code_Scanner = () => {
+    this.setState({
+      is_exist: false
+    })
 
     var that = this;
 
@@ -65,11 +82,33 @@ export default class App extends Component {
   }
 
   save = () => {
-    // write the current list of answers to a local csv file
-    var values_temp;
-    values_temp = this.state.values;
-    values_temp.push([this.state.QR_Code_Value, (new Date()).toISOString()]);
-    console.log(values_temp[0][0]);
+    // // write the current list of answers to a local csv file
+    // var values_temp;
+    // values_temp = this.state.values;
+    // values_temp.push([this.state.QR_Code_Value, (new Date()).toISOString()]);
+    // // this.state.values = values_temp;
+    // var i;
+    // // this.state.is_exist = false;
+    // this.setState({
+    //   is_exist: false
+    // })
+    // num = num + 1;
+    // for (i = 0; i < num; i++) {
+    //   if (((num > 1) && (i > 0) && values_temp[i - 1][0] == this.state.QR_Code_Value) || ((num > 1) && (values_temp[0][0] == this.state.QR_Code_Value))) {
+    //     // this.state.is_exist = true;
+    //     this.setState({
+    //       is_exist: true
+    //     })
+    //     return;
+    //   }
+    //   // if (this.state.is_exist == true) break;
+    // }
+    // if (this.state.is_exist == true) {
+    //   num = num - 1;
+    //   values_temp.pop([this.state.QR_Code_Value, values_temp[num][1]]);
+    // }
+    // console.log(this.state.is_exist);
+    // console.log(values_temp);
     const headerString = 'qrcode,timestamp\n';
     const rowString = values_temp.map(d => `${d[0]},${d[1]}\n`).join('');
     const csvString = `${headerString}${rowString}`;
@@ -116,9 +155,6 @@ export default class App extends Component {
         })
         .catch(error => console.error(error));
     }
-    //////////////
-
-
   }
 
 
@@ -132,6 +168,10 @@ export default class App extends Component {
   }
 
   resetdata = () => {
+    // this.state.is_exist = false;
+    this.setState({
+      is_exist: false
+    })
     const values_null = [];
     const headerString = 'qrcode,timestamp\n';
     const rowString = values_null.map(d => `${d[0]},${d[1]}\n`).join('');
@@ -154,7 +194,9 @@ export default class App extends Component {
 
       return (
         <View style={styles.MainContainer}>
-
+          {this.state.is_exist == true && <View style={{ flex: 1, alignContent: 'center', justifyContent: 'center', padding: 20 }}>
+            <CustomBlinkingTxt text="This already exist" />
+          </View>}
           {this.state.QR_Code_Value != '' &&
             <View>
               <View>
@@ -246,7 +288,7 @@ const styles = StyleSheet.create({
     paddingTop: (Platform.OS) === 'ios' ? 20 : 0,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 50,
+    marginTop: 30,
   },
   QR_text: {
     alignItems: 'center',
@@ -254,8 +296,8 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 20,
     padding: 0,
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 5,
+    marginBottom: 0,
   },
   button: {
     // backgroundColor: '#2979FF',
@@ -286,3 +328,26 @@ const styles = StyleSheet.create({
     marginRight: 20,
   },
 });
+
+
+class CustomBlinkingTxt extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { showText: true };
+    // Change the state every second or the time given by User.
+    setInterval(() => {
+      this.setState(previousState => {
+        return { showText: !previousState.showText };
+      });
+    },
+      // Define blinking time in milliseconds
+      1000
+    );
+  }
+  render() {
+    let display = this.state.showText ? this.props.text : ' ';
+    return (
+      <Text style={{ textAlign: 'center', marginTop: 10, marginBottom: 10, fontSize: 18, color: '#f44336' }}>{display}</Text>
+    );
+  }
+}

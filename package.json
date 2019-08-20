@@ -13,6 +13,7 @@
     "jetifier": "^1.6.4",
     "react": "^16.9.0",
     "react-native": "0.59.9",
+    "react-native-blink-view": "^0.0.6",
     "react-native-camera": "^3.1.1",
     "react-native-camera-kit": "^8.0.1",
     "react-native-email": "^1.0.2",
