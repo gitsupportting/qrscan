@@ -3,6 +3,7 @@ package com.qrscan;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.johnsonsu.rnsoundplayer.RNSoundPlayerPackage;
 import com.RNFetchBlob.RNFetchBlobPackage;
 import com.wix.RNCameraKit.RNCameraKitPackage;
 import com.reactnativecommunity.asyncstorage.AsyncStoragePackage;
@@ -27,6 +28,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new RNSoundPlayerPackage(),
             new RNFetchBlobPackage(),
             new RNCameraKitPackage(),
             new AsyncStoragePackage(),
