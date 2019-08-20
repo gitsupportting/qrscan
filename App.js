@@ -73,17 +73,51 @@ export default class App extends Component {
     const headerString = 'qrcode,timestamp\n';
     const rowString = values_temp.map(d => `${d[0]},${d[1]}\n`).join('');
     const csvString = `${headerString}${rowString}`;
+    //////////////
+    if (Platform.OS === 'android') {
+      async function requestStoragePermission() {
+        try {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE, {
+              'title': 'Storage App Permission',
+              'message': 'Camera App needs access to your storage. '
+            }
+          )
+          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
 
-    const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
-    console.log('pathToWrite', pathToWrite);
-    // pathToWrite /storage/emulated/0/Download/data.csv
-    RNFetchBlob.fs
-      .writeFile(pathToWrite, csvString, 'utf8')
-      .then(() => {
-        console.log(`wrote file ${pathToWrite}`);
-        // wrote file /storage/emulated/0/Download/data.csv
-      })
-      .catch(error => console.error(error));
+            const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
+            console.log('pathToWrite', pathToWrite);
+            // pathToWrite /storage/emulated/0/Download/data.csv
+            RNFetchBlob.fs
+              .writeFile(pathToWrite, csvString, 'utf8')
+              .then(() => {
+                console.log(`wrote file ${pathToWrite}`);
+                // wrote file /storage/emulated/0/Download/data.csv
+              })
+              .catch(error => console.error(error));
+          } else {
+            alert("STORAGE permission denied");
+          }
+        } catch (err) {
+          alert("STORAGE permission err", err);
+          console.warn(err);
+        }
+      }
+      requestStoragePermission();
+    } else {
+      const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
+      console.log('pathToWrite', pathToWrite);
+      // pathToWrite /storage/emulated/0/Download/data.csv
+      RNFetchBlob.fs
+        .writeFile(pathToWrite, csvString, 'utf8')
+        .then(() => {
+          console.log(`wrote file ${pathToWrite}`);
+          // wrote file /storage/emulated/0/Download/data.csv
+        })
+        .catch(error => console.error(error));
+    }
+    //////////////
+
 
   }
 
@@ -132,7 +166,7 @@ export default class App extends Component {
                 <Text style={styles.QR_text}>{this.state.QR_Code_Value}</Text>
               </View>
             </View>}
-          
+
 
           <TouchableOpacity
             onPress={this.open_QR_Code_Scanner}

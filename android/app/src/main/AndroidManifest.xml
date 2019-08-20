@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
+    <!-- RNFB_ANDROID_PERMISSIONS=true react-native link -->
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
@@ -23,6 +24,7 @@
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
+            <!-- s<action android:name="android.intent.action.DOWNLOAD_COMPLETE"/> -->
         </intent-filter>
       </activity>
       <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" />
