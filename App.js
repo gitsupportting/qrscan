@@ -90,7 +90,7 @@ export default class App extends Component {
     let index = values_temp.findIndex(x => x[0] === QR_Code);
     let index_csv = data2.findIndex(y => y === QR_Code);
     if (index === -1 && index_csv === -1) {
-      values_temp.push([QR_Code, (new Date()).toISOString()]);
+      console.log("");
     } else {
       this.setState({
         is_exist: true
@@ -103,6 +103,7 @@ export default class App extends Component {
         SoundPlayer.playSoundFile('wrong', 'mp3');
       } else {
         SoundPlayer.playSoundFile('correct', 'mp3');
+        values_temp.push([QR_Code, (new Date()).toISOString()]);
       }
     }, 100);
     setTimeout(() => {
@@ -159,8 +160,7 @@ export default class App extends Component {
 
   save = () => {
     this.storeData();
-    this.getData();
-    //this.init();
+    console.log
     if (is_save == true) {
       this.setState({
         is_start:true
@@ -195,7 +195,7 @@ export default class App extends Component {
               alert("STORAGE permission denied");
             }
           } catch (err) {
-            alert("STORAGE permission err", err);
+            //alert("STORAGE permission err", err);
             console.warn(err);
           }
         }
@@ -214,7 +214,8 @@ export default class App extends Component {
       }
     }
     is_save = false;
-    //this.init();
+    this.init();
+    values_temp = [];
   }
 
 
