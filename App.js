@@ -83,14 +83,14 @@ export default class App extends Component {
   }
 
   onQR_Code_Scan_Done = (QR_Code) => {
-    //this.init();
+    this.getData();
     this.setState({
       is_start:false
     })
     let index = values_temp.findIndex(x => x[0] === QR_Code);
     let index_csv = data2.findIndex(y => y === QR_Code);
     if (index === -1 && index_csv === -1) {
-      console.log("");
+      values_temp.push([QR_Code, (new Date()).toISOString()]);
     } else {
       this.setState({
         is_exist: true
@@ -103,7 +103,7 @@ export default class App extends Component {
         SoundPlayer.playSoundFile('wrong', 'mp3');
       } else {
         SoundPlayer.playSoundFile('correct', 'mp3');
-        values_temp.push([QR_Code, (new Date()).toISOString()]);
+        
       }
     }, 100);
     setTimeout(() => {
@@ -127,7 +127,7 @@ export default class App extends Component {
     this.setState({
       is_exist: false
     })
-    //this.init();
+    this.getData();
     var that = this;
 
     if (Platform.OS === 'android') {
@@ -214,8 +214,10 @@ export default class App extends Component {
       }
     }
     is_save = false;
-    this.init();
+    //this.init();
     values_temp = [];
+    //this.init();
+    this.getData();
   }
 
 
