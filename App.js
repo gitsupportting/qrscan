@@ -4,10 +4,11 @@ import { CameraKitCameraScreen, } from 'react-native-camera-kit';
 import RNFetchBlob from 'rn-fetch-blob';
 import email from 'react-native-email';
 import SoundPlayer from 'react-native-sound-player';
+import AsyncStorage from '@react-native-community/async-storage';
 var num = 0;
 var values_temp = [];
-var is_start = true;
 var data2 = [];
+var is_save = true;
 export default class App extends Component {
   constructor() {
 
@@ -21,18 +22,39 @@ export default class App extends Component {
       values: [],
       is_exist: false,
       showView: false,
+      is_start: true,
     };
 
     setInterval(() => {
       this.setState(previousState => {
         return { showView: !previousState.showView };
+
       });
     },
       // Define blinking time in milliseconds
       2000
     );
-    this.init();
+   this.getData();
+    //this.init();
   }
+  storeData = async () => {
+    try {
+      await AsyncStorage.setItem('@storage_Key', `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`)
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  getData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('@storage_Key')
+      if(value) {
+        this.init();
+      }
+    } catch(e) {
+      console.log(e);
+    }
+
+  } 
   init = () => {
     var filePath;
     if (Platform.OS === 'ios') {
@@ -61,7 +83,10 @@ export default class App extends Component {
   }
 
   onQR_Code_Scan_Done = (QR_Code) => {
-    is_start = false;
+    //this.init();
+    this.setState({
+      is_start:false
+    })
     let index = values_temp.findIndex(x => x[0] === QR_Code);
     let index_csv = data2.findIndex(y => y === QR_Code);
     if (index === -1 && index_csv === -1) {
@@ -80,6 +105,14 @@ export default class App extends Component {
         SoundPlayer.playSoundFile('correct', 'mp3');
       }
     }, 100);
+    setTimeout(() => {
+      if (this.state.is_start == false) {
+        this.setState({
+          is_start:true
+        })
+      }
+    }, 1000);
+    is_save = true;
     this.setState({
       Start_Scanner: false
     })
@@ -93,7 +126,7 @@ export default class App extends Component {
     this.setState({
       is_exist: false
     })
-
+    //this.init();
     var that = this;
 
     if (Platform.OS === 'android') {
@@ -122,95 +155,73 @@ export default class App extends Component {
       that.setState({ QR_Code_Value: '' });
       that.setState({ Start_Scanner: true });
     }
-
-
-
-    // fileUri is a string like "file:///var/mobile/Containers/Data/Application/9B754FAA-2588-4FEC-B0F7-6D890B7B4681/Documents/filename"
-
   }
 
   save = () => {
+    this.storeData();
+    this.getData();
+    //this.init();
+    if (is_save == true) {
+      this.setState({
+        is_start:true
+      })
+      const headerString = 'qrcode,timestamp\n';
+      const rowString = values_temp.map(d => `${d[0]},${d[1]}\n`).join('');
+      // const csvString = `${headerString}${rowString}`;
+      const csvString = `${rowString}`;
+      //////////////
+      if (Platform.OS === 'android') {
+        async function requestStoragePermission() {
+          try {
+            const granted = await PermissionsAndroid.request(
+              PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE, {
+                'title': 'Storage App Permission',
+                'message': 'Camera App needs access to your storage. '
+              }
+            )
+            if (granted === PermissionsAndroid.RESULTS.GRANTED) {
 
-    // // write the current list of answers to a local csv file
-    // var values_temp;
-    // values_temp = this.state.values;
-    // values_temp.push([this.state.QR_Code_Value, (new Date()).toISOString()]);
-    // // this.state.values = values_temp;
-    // var i;
-    // // this.state.is_exist = false;
-    // this.setState({
-    //   is_exist: false
-    // })
-    // num = num + 1;
-    // for (i = 0; i < num; i++) {
-    //   if (((num > 1) && (i > 0) && values_temp[i - 1][0] == this.state.QR_Code_Value) || ((num > 1) && (values_temp[0][0] == this.state.QR_Code_Value))) {
-    //     // this.state.is_exist = true;
-    //     this.setState({
-    //       is_exist: true
-    //     })
-    //     return;
-    //   }
-    //   // if (this.state.is_exist == true) break;
-    // }
-    // if (this.state.is_exist == true) {
-    //   num = num - 1;
-    //   values_temp.pop([this.state.QR_Code_Value, values_temp[num][1]]);
-    // }
-    // console.log(this.state.is_exist);
-    // console.log(values_temp);
-    is_start = true;
-    const headerString = 'qrcode,timestamp\n';
-    const rowString = values_temp.map(d => `${d[0]},${d[1]}\n`).join('');
-    // const csvString = `${headerString}${rowString}`;
-    const csvString = `${rowString}`;
-    //////////////
-    if (Platform.OS === 'android') {
-      async function requestStoragePermission() {
-        try {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE, {
-              'title': 'Storage App Permission',
-              'message': 'Camera App needs access to your storage. '
+              const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
+              console.log('pathToWrite', pathToWrite);
+              // pathToWrite /storage/emulated/0/Download/data.csv
+              RNFetchBlob.fs
+                .appendFile(pathToWrite, csvString, 'utf8')
+                .then(() => {
+                  console.log(`wrote file ${pathToWrite}`);
+                  // wrote file /storage/emulated/0/Download/data.csv
+                })
+                .catch(error => console.error(error));
+            } else {
+              alert("STORAGE permission denied");
             }
-          )
-          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-
-            const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
-            console.log('pathToWrite', pathToWrite);
-            // pathToWrite /storage/emulated/0/Download/data.csv
-            RNFetchBlob.fs
-              .appendFile(pathToWrite, csvString, 'utf8')
-              .then(() => {
-                console.log(`wrote file ${pathToWrite}`);
-                // wrote file /storage/emulated/0/Download/data.csv
-              })
-              .catch(error => console.error(error));
-          } else {
-            alert("STORAGE permission denied");
+          } catch (err) {
+            alert("STORAGE permission err", err);
+            console.warn(err);
           }
-        } catch (err) {
-          alert("STORAGE permission err", err);
-          console.warn(err);
         }
+        requestStoragePermission();
+      } else {
+        const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
+        console.log('pathToWrite', pathToWrite);
+        // pathToWrite /storage/emulated/0/Download/data.csv
+        RNFetchBlob.fs
+          .writeFile(pathToWrite, csvString, 'utf8')
+          .then(() => {
+            console.log(`wrote file ${pathToWrite}`);
+            // wrote file /storage/emulated/0/Download/data.csv
+          })
+          .catch(error => console.error(error));
       }
-      requestStoragePermission();
-    } else {
-      const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
-      console.log('pathToWrite', pathToWrite);
-      // pathToWrite /storage/emulated/0/Download/data.csv
-      RNFetchBlob.fs
-        .writeFile(pathToWrite, csvString, 'utf8')
-        .then(() => {
-          console.log(`wrote file ${pathToWrite}`);
-          // wrote file /storage/emulated/0/Download/data.csv
-        })
-        .catch(error => console.error(error));
     }
+    is_save = false;
+    //this.init();
   }
 
 
   sendmail = () => {
-    is_start = true;
+    this.setState({
+      is_start:true
+    })
     const to = ['advancedaquire@gmail.com'] // string or array of email addresses
     email(to, {
       // Optional additional arguments
@@ -221,7 +232,10 @@ export default class App extends Component {
 
   resetdata = () => {
     // this.state.is_exist = false;
-    is_start = true;
+    this.setState({
+      is_start:true
+    })
+    data2 = [];
     values_temp = [];
     this.setState({
       is_exist: false
@@ -245,9 +259,9 @@ export default class App extends Component {
   }
 
   render() {
-    if (!this.state.Start_Scanner && is_start) {
+    if (!this.state.Start_Scanner && this.state.is_start) {
       // SoundPlayer.playSoundFile('correct', 'mp3');
-      //is_start = false;
+      //this.state.is_start = false;
       return (
         <View style={styles.MainContainer} >
           {this.state.QR_Code_Value != '' &&
@@ -315,160 +329,22 @@ export default class App extends Component {
         </View>
       )
     }
-    if (!this.state.Start_Scanner && !(this.state.is_exist) && !(is_start)) {
+    if (!this.state.Start_Scanner && !(this.state.is_exist) && !(this.state.is_start)) {
       // SoundPlayer.playSoundFile('correct', 'mp3');
       return (
-        this.state.showView ? (
-          <View style={styles.MainContainer} >
-            {this.state.QR_Code_Value != '' &&
-              <View>
-                <View>
-                  <Text style={styles.QR_text}>
-                    {'Scanned QR Code:'}
-                  </Text>
-                </View>
-                <View>
-                  <Text style={styles.QR_text}>{this.state.QR_Code_Value}</Text>
-                </View>
-              </View>}
 
+        <View style={styles.BlankContainer_blue}>
 
-            <TouchableOpacity
-              onPress={this.open_QR_Code_Scanner}
-              style={styles.button}>
-              <Image
-                source={require('./Images/scan.png')}
-                style={styles.ImageIconStyle}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={this.save}
-              style={styles.button}>
-              <Image
-                source={require('./Images/ui-02.png')}
-                style={styles.ImageIconStyle}
-              />
-            </TouchableOpacity>
-
-
-            {/* 
-            {this.state.QR_Code_Value.includes("http") ?
-              <TouchableOpacity
-                onPress={this.openLink_in_browser}
-                style={styles.button}>
-                <Text style={{ color: '#FFF', fontSize: 14 }}>Open Link in default Browser</Text>
-              </TouchableOpacity> : null
-            } */}
-
-
-            <TouchableOpacity
-              onPress={this.sendmail}
-              style={styles.button}>
-              <Image
-                source={require('./Images/email.png')}
-                style={styles.ImageIconStyle}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={this.resetdata}
-              style={styles.button}>
-              <Image
-                source={require('./Images/ui-03.png')}
-                style={styles.ImageIconStyle}
-              />
-            </TouchableOpacity>
-            <Image
-              source={require('./Images/logo.jpg')}
-              style={styles.ImageIconStyle_logo}
-            />
-
-          </View>
-        ) :
-          (<View style={styles.BlankContainer_blue}>
-
-          </View>)
-
-
-
-
+        </View>
       );
     }
-    if (!this.state.Start_Scanner && this.state.is_exist && !(is_start)) {
+    if (!this.state.Start_Scanner && this.state.is_exist && !(this.state.is_start)) {
       // SoundPlayer.playSoundFile('wrong', 'mp3');
       return (
-        this.state.showView ? (
-          <View style={styles.MainContainer} >
-            {this.state.QR_Code_Value != '' &&
-              <View>
-                <View>
-                  <Text style={styles.QR_text}>
-                    {'Scanned QR Code:'}
-                  </Text>
-                </View>
-                <View>
-                  <Text style={styles.QR_text}>{this.state.QR_Code_Value}</Text>
-                </View>
-              </View>}
 
+        <View style={styles.BlankContainer_red}>
 
-            <TouchableOpacity
-              onPress={this.open_QR_Code_Scanner}
-              style={styles.button}>
-              <Image
-                source={require('./Images/scan.png')}
-                style={styles.ImageIconStyle}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={this.save}
-              style={styles.button}>
-              <Image
-                source={require('./Images/ui-02.png')}
-                style={styles.ImageIconStyle}
-              />
-            </TouchableOpacity>
-
-
-            {/* 
-            {this.state.QR_Code_Value.includes("http") ?
-              <TouchableOpacity
-                onPress={this.openLink_in_browser}
-                style={styles.button}>
-                <Text style={{ color: '#FFF', fontSize: 14 }}>Open Link in default Browser</Text>
-              </TouchableOpacity> : null
-            } */}
-
-
-            <TouchableOpacity
-              onPress={this.sendmail}
-              style={styles.button}>
-              <Image
-                source={require('./Images/email.png')}
-                style={styles.ImageIconStyle}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={this.resetdata}
-              style={styles.button}>
-              <Image
-                source={require('./Images/ui-03.png')}
-                style={styles.ImageIconStyle}
-              />
-            </TouchableOpacity>
-            <Image
-              source={require('./Images/logo.jpg')}
-              style={styles.ImageIconStyle_logo}
-            />
-
-          </View>
-        ) :
-          (<View style={styles.BlankContainer_red}>
-
-          </View>)
-
-
-
-
+        </View>
       );
     }
     return (
@@ -504,7 +380,7 @@ const styles = StyleSheet.create({
     paddingTop: (Platform.OS) === 'ios' ? 20 : 0,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'blue',
+    backgroundColor: 'green',
   },
   BlankContainer_red: {
     flex: 1,
