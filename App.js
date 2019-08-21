@@ -214,10 +214,8 @@ export default class App extends Component {
       }
     }
     is_save = false;
-    //this.init();
     values_temp = [];
-    //this.init();
-    this.getData();
+    //sthis.getData();
   }
 
 
