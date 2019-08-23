@@ -2,9 +2,11 @@ import React, { Component } from 'react';
 import { StyleSheet, View, Text, Image, Platform, TouchableOpacity, Linking, PermissionsAndroid } from 'react-native';
 import { CameraKitCameraScreen, } from 'react-native-camera-kit';
 import RNFetchBlob from 'rn-fetch-blob';
-import email from 'react-native-email';
+// import email from 'react-native-email';
 import SoundPlayer from 'react-native-sound-player';
 import AsyncStorage from '@react-native-community/async-storage';
+import Mailer from 'react-native-mail';
+var RNFS = require('react-native-fs');
 var num = 0;
 var values_temp = [];
 var data2 = [];
@@ -34,12 +36,12 @@ export default class App extends Component {
       // Define blinking time in milliseconds
       2000
     );
-   this.getData();
+    this.getData();
     //this.init();
   }
   storeData = async () => {
     try {
-      await AsyncStorage.setItem('@storage_Key', `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`)
+      await AsyncStorage.setItem('@storage_Key', `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`)
     } catch (e) {
       console.log(e);
     }
@@ -47,24 +49,23 @@ export default class App extends Component {
   getData = async () => {
     try {
       const value = await AsyncStorage.getItem('@storage_Key')
-      if(value) {
+      if (value) {
         this.init();
       }
-    } catch(e) {
+    } catch (e) {
       console.log(e);
     }
 
-  } 
+  }
   init = () => {
     var filePath;
     if (Platform.OS === 'ios') {
-      let arr = fileUri.split('/')
-      const dirs = RNFetchBlob.fs.dirs
-      filePath = `${dirs.DownloadDir}/${arr[arr.length - 1]}`
+      //let arr = fileUri.split('/')
+      filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`
     } else {
-      filePath = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
+      filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`;
     }
-    // const filePath = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
+
     RNFetchBlob.fs.readFile(filePath, 'utf8')
       .then((data) => {
         var data1 = [];
@@ -85,7 +86,7 @@ export default class App extends Component {
   onQR_Code_Scan_Done = (QR_Code) => {
     this.getData();
     this.setState({
-      is_start:false
+      is_start: false
     })
     let index = values_temp.findIndex(x => x[0] === QR_Code);
     let index_csv = data2.findIndex(y => y === QR_Code);
@@ -103,13 +104,13 @@ export default class App extends Component {
         SoundPlayer.playSoundFile('wrong', 'mp3');
       } else {
         SoundPlayer.playSoundFile('correct', 'mp3');
-        
+
       }
     }, 100);
     setTimeout(() => {
       if (this.state.is_start == false) {
         this.setState({
-          is_start:true
+          is_start: true
         })
       }
     }, 1000);
@@ -163,7 +164,7 @@ export default class App extends Component {
     console.log
     if (is_save == true) {
       this.setState({
-        is_start:true
+        is_start: true
       })
       const headerString = 'qrcode,timestamp\n';
       const rowString = values_temp.map(d => `${d[0]},${d[1]}\n`).join('');
@@ -180,15 +181,18 @@ export default class App extends Component {
               }
             )
             if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-
-              const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
-              console.log('pathToWrite', pathToWrite);
-              // pathToWrite /storage/emulated/0/Download/data.csv
+              if (Platform.OS === 'ios') {
+                //let arr = fileUri.split('/')
+                filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`
+              } else {
+                filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`;
+              }
+              console.log('pathToWrite', filePath);
               RNFetchBlob.fs
-                .appendFile(pathToWrite, csvString, 'utf8')
+                .appendFile(filePath, csvString, 'utf8')
                 .then(() => {
-                  console.log(`wrote file ${pathToWrite}`);
-                  // wrote file /storage/emulated/0/Download/data.csv
+                  console.log(`wrote file ${filePath}`);
+                  
                 })
                 .catch(error => console.error(error));
             } else {
@@ -201,15 +205,17 @@ export default class App extends Component {
         }
         requestStoragePermission();
       } else {
-        const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
-        console.log('pathToWrite', pathToWrite);
-        // pathToWrite /storage/emulated/0/Download/data.csv
+        if (Platform.OS === 'ios') {
+          filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`
+        } else {
+          filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`;
+        }
+        console.log('pathToWrite', filePath);
         RNFetchBlob.fs
-          .writeFile(pathToWrite, csvString, 'utf8')
+          .writeFile(filePath, csvString, 'utf8')
           .then(() => {
-            console.log(`wrote file ${pathToWrite}`);
-            // wrote file /storage/emulated/0/Download/data.csv
-          })
+            console.log(`wrote file ${filePath}`);
+            })
           .catch(error => console.error(error));
       }
     }
@@ -221,20 +227,37 @@ export default class App extends Component {
 
   sendmail = () => {
     this.setState({
-      is_start:true
+      is_start: true
     })
-    const to = ['advancedaquire@gmail.com'] // string or array of email addresses
-    email(to, {
-      // Optional additional arguments
-      subject: 'Send QR code',
-      body: 'select data.csv'
-    }).catch(console.error)
+    // const to = ['advancedaquire@gmail.com'] // string or array of email addresses
+    // email(to, {
+    //   // Optional additional arguments
+    //   subject: 'Send QR code',
+    //   body: 'select data.csv',
+    //   attachment: {
+    //     path: `${RNFetchBlob.fs.dirs.DocumentDir}/data.csv`,  // The absolute path of the file from which to read data.
+    //     type: 'csv'   // Mime Type: jpg, png, doc, ppt, html, pdf, csv
+    //   }
+    // }).catch(console.error)
+    
+      Mailer.mail({
+        subject: 'send qrcode data',
+        recipients: ['anthonnyberg@hotmail.com','advancedaquire@gmail.com'],
+        attachment: {
+          path: `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`,  // The absolute path of the file from which to read data.
+          type: 'csv',   // Mime Type: jpg, png, doc, ppt, html, pdf, csv
+          name: 'qrscan',   // Optional: Custom filename for attachment
+        }
+      }, (error, event) => {
+        console.log(error);
+      });
+    
   }
 
   resetdata = () => {
     // this.state.is_exist = false;
     this.setState({
-      is_start:true
+      is_start: true
     })
     data2 = [];
     values_temp = [];
@@ -246,16 +269,18 @@ export default class App extends Component {
     const rowString = values_null.map(d => `${d[0]},${d[1]}\n`).join('');
     // const csvString = `${headerString}${rowString}`;
     const csvString = `${rowString}`;
-
-    const pathToWrite = `${RNFetchBlob.fs.dirs.DownloadDir}/data.csv`;
-    console.log('pathToWrite', pathToWrite);
-    // pathToWrite /storage/emulated/0/Download/data.csv
+    if (Platform.OS === 'ios') {
+      //let arr = fileUri.split('/')
+      filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`
+    } else {
+      filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`;
+    }
+    console.log('pathToWrite', filePath);
     RNFetchBlob.fs
-      .writeFile(pathToWrite, csvString, 'utf8')
+      .writeFile(filePath, csvString, 'utf8')
       .then(() => {
-        console.log(`wrote file ${pathToWrite}`);
-        // wrote file /storage/emulated/0/Download/data.csv
-      })
+        console.log(`wrote file ${filePath}`);
+        })
       .catch(error => console.error(error));
   }
 
