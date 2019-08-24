@@ -11,6 +11,7 @@ var num = 0;
 var values_temp = [];
 var data2 = [];
 var is_save = true;
+var filesavepath = `${RNFetchBlob.fs.dirs.DocumentDir}/data1.csv`;
 export default class App extends Component {
   constructor() {
 
@@ -41,7 +42,7 @@ export default class App extends Component {
   }
   storeData = async () => {
     try {
-      await AsyncStorage.setItem('@storage_Key', `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`)
+      await AsyncStorage.setItem('@storage_Key', filesavepath)
     } catch (e) {
       console.log(e);
     }
@@ -61,9 +62,9 @@ export default class App extends Component {
     var filePath;
     if (Platform.OS === 'ios') {
       //let arr = fileUri.split('/')
-      filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`
+      filePath = filesavepath
     } else {
-      filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`;
+      filePath = filesavepath;
     }
 
     RNFetchBlob.fs.readFile(filePath, 'utf8')
@@ -166,9 +167,10 @@ export default class App extends Component {
       this.setState({
         is_start: true
       })
-      const headerString = 'qrcode,timestamp\n';
+      //const headerString = 'qrcode,timestamp\n';
+      //const headerString = data2.map(dd => `${dd[0]},${dd[1]}\n`).join('');
       const rowString = values_temp.map(d => `${d[0]},${d[1]}\n`).join('');
-      // const csvString = `${headerString}${rowString}`;
+      //const csvString = `${headerString}${rowString}`;
       const csvString = `${rowString}`;
       //////////////
       if (Platform.OS === 'android') {
@@ -183,9 +185,9 @@ export default class App extends Component {
             if (granted === PermissionsAndroid.RESULTS.GRANTED) {
               if (Platform.OS === 'ios') {
                 //let arr = fileUri.split('/')
-                filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`
+                filePath = filesavepath
               } else {
-                filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`;
+                filePath = filesavepath;
               }
               console.log('pathToWrite', filePath);
               RNFetchBlob.fs
@@ -206,13 +208,13 @@ export default class App extends Component {
         requestStoragePermission();
       } else {
         if (Platform.OS === 'ios') {
-          filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`
+          filePath = filesavepath
         } else {
-          filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`;
+          filePath = filesavepath;
         }
         console.log('pathToWrite', filePath);
         RNFetchBlob.fs
-          .writeFile(filePath, csvString, 'utf8')
+          .appendFile(filePath, csvString, 'utf8')
           .then(() => {
             console.log(`wrote file ${filePath}`);
             })
@@ -242,11 +244,11 @@ export default class App extends Component {
     
       Mailer.mail({
         subject: 'send qrcode data',
-        recipients: ['anthonnyberg@hotmail.com','advancedaquire@gmail.com'],
+        recipients: ['anthonnyberg@hotmail.com','advancedaquire@gmail.com','silverwing2019@outlook.com'],
         attachment: {
-          path: `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`,  // The absolute path of the file from which to read data.
-          type: 'csv',   // Mime Type: jpg, png, doc, ppt, html, pdf, csv
-          name: 'qrscan',   // Optional: Custom filename for attachment
+          path: filesavepath,  // The absolute path of the file from which to read data.
+          type: 'doc',   // Mime Type: jpg, png, doc, ppt, html, pdf, csv
+          name: 'qrscan.csv',   // Optional: Custom filename for attachment
         }
       }, (error, event) => {
         console.log(error);
@@ -271,9 +273,9 @@ export default class App extends Component {
     const csvString = `${rowString}`;
     if (Platform.OS === 'ios') {
       //let arr = fileUri.split('/')
-      filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`
+      filePath = filesavepath
     } else {
-      filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/data111.csv`;
+      filePath = filesavepath;
     }
     console.log('pathToWrite', filePath);
     RNFetchBlob.fs
